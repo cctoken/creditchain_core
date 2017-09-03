@@ -1,0 +1,15 @@
+pragama solidity ^0.4.13;
+
+contract CreditContractTemplate{
+	public address creditSide;
+	public address debitSide;
+	//base crc
+	public uint256 amount;
+	//percentage
+	public uint256 interestRate;
+	public uint256 startTime;
+	public uint256 endTime;
+	//1 for eth , 2 for erc20
+	uint8 pledgeType;
+
+}
