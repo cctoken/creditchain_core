@@ -1,8 +1,16 @@
 pragama solidity ^0.4.13;
+import './PledgeManager.sol';
 
-contract CreditContractTemplate{
+import 'github.com/cctoken/cctoken/contracts/CRCToken.sol';
+
+contract CreditContractTemplate {
 	public address creditSide;
 	public address debitSide;
+
+	public PledgeManager pledgeManager;
+	public CRCToken crcToken;
+
+	public address pledgeManagerAddress;
 	//base crc
 	public uint256 amount;
 	//percentage
@@ -10,6 +18,46 @@ contract CreditContractTemplate{
 	public uint256 startTime;
 	public uint256 endTime;
 	//1 for eth , 2 for erc20
-	uint8 pledgeType;
+	public string symbol;
 
+	function CreditContractTemplate(){
+		pledgeManager = PledgeManager(0xxxxxxxxxxxxxxxxxxxx);
+		crcToken = CRCToken(0xxxxxxxxxxxxxxxxxxxx);
+	}
+
+	modifier onlyCreditSide(){
+		assert(msg.sender==creditSide);
+    	_;
+	}
+
+	modifier onlyDebitSide(){
+		assert(msg.sender==debitSide);
+		_;
+	}
+
+	modifier reachEndTime(){
+		assert(now >= endTime);
+		_;
+	}
+
+
+
+
+	//approve then do this
+	function freezeCRC(uint256 _value) external
+		onlyCreditSide
+		reachEndTime
+	{
+		amount=_value;
+		if(!crcToken.transferFrom(msg.sender,this,_value)) revert();
+
+	}
+
+	function unfreezeCRC() external
+		onlyCreditSide
+		reachEndTime
+	{
+		amount=0;
+		if(!crcToken.transfer(msg.sender,_value)) revert();
+	}
 }
