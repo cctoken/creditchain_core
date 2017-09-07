@@ -15,7 +15,9 @@ contract CreditContractTemplate is CreditContractInterface{
 	public uint256 interestRate;
 
     public uint256 pledgeAmount;
+    public uint256 targetPledgeAmount;
     public uint256 crcAmount;
+    public uint256 targetCrcAmount;
 
 	public uint256 startTime;
 	public uint256 endTime;
@@ -23,6 +25,7 @@ contract CreditContractTemplate is CreditContractInterface{
     public uint256 waitRedeemTime;
     public uint256 closePositionRate;
     public boolean finish;
+    public boolean hasPledge;
 
 
 	function CreditContractTemplate(){
@@ -43,28 +46,58 @@ contract CreditContractTemplate is CreditContractInterface{
 		assert(now < startTime);
 		_;
 	}
+	modifier reachStartTime(){
+		assert(now >= startTime);
+		_;
+	}
+
+	modifier notReachEndTime(){
+		assert(now < endTime);
+		_;
+	}
 
 	modifier reachEndTime(){
 		assert(now >= endTime);
 		_;
 	}
 
-    function creditSizeSendCRC(uint256 _vaule) {}
-    function creditSizeReceiveCRC() {}
-    function creditClosePosition(){}
-    function debitSizeReceiveCRC(){}
-    function debitSizePledgeWithERC20(uint256 _vaule) {}
-    function debitSizePledgeWithETH(){}
-    function debitSizeRedeemPledge(uint256 _crcVaule) {}
-    function changeCreditSize(address newCreditSize){}
-    function changeDebitSize(address newDebitSize){}
-    function changeInterestRate(uint256 _interestRate){}
+	modifier notReachWaitRedeemTime(){
+		assert(now < waitRedeemTime);
+		_;
+	}
+
+	modifier reachTargetCrcAmount(){
+		assert(getCrcAmount()>=getTargetCrcAmount());
+		_;
+	}
+
+	modifier reachTargetPledgeAmount(){
+		assert(getPledgeAmount()>=getTargetPledgeAmount());
+		_;
+	}
+
+
+    function creditSizeSendCRC(uint256 _vaule) external onlyCreditSide notReachStartTime {}
+    function creditSizeReceiveCRC() external onlyCreditSide reachEndTime {}
+    function creditClosePosition() external onlyCreditSide notReachWaitRedeemTime {}
+    function debitSizeReceiveCRC() external reachStartTime notReachEndTime reachTargetPledgeAmount{}
+
+
+    function debitSizePledgeWithERC20(uint256 _vaule) external {}
+    function debitSizePledgeWithETH() external {}
+    function debitSizeRedeemPledge(uint256 _crcVaule) external {}
+    function changeCreditSize(address newCreditSize) external {}
+    function changeDebitSize(address newDebitSize) external {}
+    function changeInterestRate(uint256 _interestRate) external {}
 
     function getPledgeSymbol() constant returns(string){return pledgeSymbol;}
     function getInterestRate() constant returns(uint256){return interestRate;}
     function getDebitSize() constant returns(address){return debitSide;}
     function getCreditSize() constant returns(address){return creditSide;}
+    function getTargetPledgeAmount() constant returns(uint256){return targetPledgeAmount;}
     function getPledgeAmount() constant returns(uint256){return pledgeAmount;}
+
+    function getTargetCrcAmount() constant returns(uint256){return targetCrcAmount;}
     function getCRCAmount() constant returns(uint256){return crcAmount;}
     function getStartTime() constant returns(uint256){return startTime;}
     function getEndTime() constant returns(uint256){return endTime;}

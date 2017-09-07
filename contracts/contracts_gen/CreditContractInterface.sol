@@ -23,10 +23,14 @@ constract CreditContractInterface{
     function getDebitSize() constant returns(address);
     function getCreditSize() constant returns(address);
     function getPledgeAmount() constant returns(uint256);
+    function getTargetPledgeAmount() constant returns(uint256);
     function getCRCAmount() constant returns(uint256);
+    function getTargetCRCAmount() constant returns(uint256);
+
     function getStartTime() constant returns(uint256);
     function getEndTime() constant returns(uint256);
     function getWaitRedeemTime() constant returns(uint256);
     function getClosePositionRate() constant returns(uint256);
+
     function isFinish() constant returns(bool);
 }
