@@ -1,0 +1,75 @@
+pragama solidity ^0.4.13;
+
+import '../support/PledgeManager.sol';
+import 'github.com/cctoken/cctoken/contracts/CRCToken.sol';
+import './CreditContractInterface.sol';
+
+contract CreditContractTemplate is CreditContractInterface{
+	public address creditSide;
+	public address debitSide;
+	public PledgeManager pledgeManager;
+	public CRCToken crcToken;
+
+
+    public string pledgeSymbol;
+	public uint256 interestRate;
+
+    public uint256 pledgeAmount;
+    public uint256 crcAmount;
+
+	public uint256 startTime;
+	public uint256 endTime;
+
+    public uint256 waitRedeemTime;
+    public uint256 closePositionRate;
+    public boolean finish;
+
+
+	function CreditContractTemplate(){
+		pledgeManager = PledgeManager(0xxxxxxxxxxxxxxxxxxxx);
+		crcToken = CRCToken(0xxxxxxxxxxxxxxxxxxxx);
+	}
+
+	modifier onlyCreditSide(){
+		assert(msg.sender==creditSide);
+    	_;
+	}
+
+	modifier onlyDebitSide(){
+		assert(msg.sender==debitSide);
+		_;
+	}
+	modifier notReachStartTime(){
+		assert(now < startTime);
+		_;
+	}
+
+	modifier reachEndTime(){
+		assert(now >= endTime);
+		_;
+	}
+
+    function creditSizeSendCRC(uint256 _vaule) {}
+    function creditSizeReceiveCRC() {}
+    function creditClosePosition(){}
+    function debitSizeReceiveCRC(){}
+    function debitSizePledgeWithERC20(uint256 _vaule) {}
+    function debitSizePledgeWithETH(){}
+    function debitSizeRedeemPledge(uint256 _crcVaule) {}
+    function changeCreditSize(address newCreditSize){}
+    function changeDebitSize(address newDebitSize){}
+    function changeInterestRate(uint256 _interestRate){}
+
+    function getPledgeSymbol() constant returns(string){return pledgeSymbol;}
+    function getInterestRate() constant returns(uint256){return interestRate;}
+    function getDebitSize() constant returns(address){return debitSide;}
+    function getCreditSize() constant returns(address){return creditSide;}
+    function getPledgeAmount() constant returns(uint256){return pledgeAmount;}
+    function getCRCAmount() constant returns(uint256){return crcAmount;}
+    function getStartTime() constant returns(uint256){return startTime;}
+    function getEndTime() constant returns(uint256){return endTime;}
+    function getWaitRedeemTime() constant returns(uint256){return waitRedeemTime;}
+    function getClosePositionRate() constant returns(uint256){return closePositionRate;}
+    function isFinish() constant returns(bool){return finish;}
+
+}

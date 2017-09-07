@@ -2,7 +2,7 @@ pragma solidity ^0.4.13;
 import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
 contract PledgeManager is Ownable {
 	struct pledge{
-		string symbol;
+	    string  symbol;
 		address tokenAddress;
 		string anchoringRestApi;
 	}
@@ -18,11 +18,9 @@ contract PledgeManager is Ownable {
 		p.anchoringRestApi=_anchoringRestApi;
 	}
 
-    function getPledge(string _symbol) public returns (string,address,string)
-
+    function getPledge(string _symbol) public constant returns (string,address,string)
     {
         pledge storage p=pledges[_symbol];
-
         return (p.symbol,p.tokenAddress,p.anchoringRestApi);
     }
 }
