@@ -10,12 +10,20 @@ constract CreditContractInterface{
 
     function debitSizePledgeWithERC20(uint256 _vaule) ;
     function debitSizePledgeWithETH();
-    function debitSizeRedeemPledge(uint256 _crcVaule) ;
+
+    function debitSizePayback(uint256 _crcVaule);
+    function debitSizeRedeemPledge() ;
 
     function changeCreditSize(address newCreditSize);
     function changeDebitSize(address newDebitSize);
 
-    function changeInterestRate(uint256 _interestRate);
+    function setCreditSize(address newCreditSize);
+    function setDebitSize(address newDebitSize);
+
+
+
+
+	function setBaseInfo(string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate) ;
 
 
     function getPledgeSymbol() constant returns(string);
@@ -31,6 +39,6 @@ constract CreditContractInterface{
     function getEndTime() constant returns(uint256);
     function getWaitRedeemTime() constant returns(uint256);
     function getClosePositionRate() constant returns(uint256);
-
+	function getPaybackAmount() constant returns(uint256);
     function isFinish() constant returns(bool);
 }

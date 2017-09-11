@@ -10,7 +10,6 @@ contract CreditContractTemplate is CreditContractInterface{
 	public PledgeManager pledgeManager;
 	public CRCToken crcToken;
 
-
     public string pledgeSymbol;
 	public uint256 interestRate;
 
@@ -23,14 +22,26 @@ contract CreditContractTemplate is CreditContractInterface{
 	public uint256 endTime;
 
     public uint256 waitRedeemTime;
+
     public uint256 closePositionRate;
+
+
     public boolean finish;
+    public uint256 paybackAmount;
     public boolean hasPledge;
+
+
+    public boolean baseInfoHasSet;
+
+
 
 
 	function CreditContractTemplate(){
 		pledgeManager = PledgeManager(0xxxxxxxxxxxxxxxxxxxx);
 		crcToken = CRCToken(0xxxxxxxxxxxxxxxxxxxx);
+		baseInfoHasSet=false;
+		finish=false;
+		hasPledge=false;
 	}
 
 	modifier onlyCreditSide(){
@@ -76,19 +87,42 @@ contract CreditContractTemplate is CreditContractInterface{
 		_;
 	}
 
+    modifiler reachPaybackAmount(){
+		assert(getPaybackAmount()>=(100.add(interestRate)).mul(crcAmount.div(100)));
+		_;
+    }
+
+
+    modifiler creditSideNotSet(){
+		assert(getCreditSize()==0x);
+		_;
+    }
+
+    modifiler debitSizeNotSet(){
+		assert(getDebitSize()==0x);
+		_;
+    }
+
+    modifiler baseInfoNotSet(){
+		assert(!baseInfoHasSet);
+		_;
+    }
+
 
     function creditSizeSendCRC(uint256 _vaule) external onlyCreditSide notReachStartTime {}
     function creditSizeReceiveCRC() external onlyCreditSide reachEndTime {}
     function creditClosePosition() external onlyCreditSide notReachWaitRedeemTime {}
     function debitSizeReceiveCRC() external reachStartTime notReachEndTime reachTargetPledgeAmount{}
+    function debitSizePledgeWithERC20(uint256 _vaule) external onlyDebitSide notReachStartTime {}
+    function debitSizePledgeWithETH() external  external onlyDebitSide notReachStartTime {}
+	function debitSizePayback(uint256 _crcVaule) external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime {}
+	function debitSizeRedeemPledge() external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime reachPaybackAmount {}
+    function changeCreditSize(address newCreditSize) external onlyCreditSide{}
+    function changeDebitSize(address newDebitSize) external onlyDebitSide{}
+    function setCreditSize(address newCreditSize) external creditSideNotSet{}
+    function setDebitSize(address newDebitSize) external debitSizeNotSet{}
+	function setBaseInfo(string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public baseInfoNotSet{}
 
-
-    function debitSizePledgeWithERC20(uint256 _vaule) external {}
-    function debitSizePledgeWithETH() external {}
-    function debitSizeRedeemPledge(uint256 _crcVaule) external {}
-    function changeCreditSize(address newCreditSize) external {}
-    function changeDebitSize(address newDebitSize) external {}
-    function changeInterestRate(uint256 _interestRate) external {}
 
     function getPledgeSymbol() constant returns(string){return pledgeSymbol;}
     function getInterestRate() constant returns(uint256){return interestRate;}
@@ -96,13 +130,13 @@ contract CreditContractTemplate is CreditContractInterface{
     function getCreditSize() constant returns(address){return creditSide;}
     function getTargetPledgeAmount() constant returns(uint256){return targetPledgeAmount;}
     function getPledgeAmount() constant returns(uint256){return pledgeAmount;}
-
     function getTargetCrcAmount() constant returns(uint256){return targetCrcAmount;}
     function getCRCAmount() constant returns(uint256){return crcAmount;}
     function getStartTime() constant returns(uint256){return startTime;}
     function getEndTime() constant returns(uint256){return endTime;}
     function getWaitRedeemTime() constant returns(uint256){return waitRedeemTime;}
     function getClosePositionRate() constant returns(uint256){return closePositionRate;}
+    function getPaybackAmount() constant returns(uint256){return paybackAmount;}
     function isFinish() constant returns(bool){return finish;}
 
 }
