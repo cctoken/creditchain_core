@@ -119,9 +119,10 @@ contract CreditContractTemplate is CreditContractInterface{
 	function debitSizeRedeemPledge() external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime reachPaybackAmount {}
     function changeCreditSize(address newCreditSize) external onlyCreditSide{}
     function changeDebitSize(address newDebitSize) external onlyDebitSide{}
-    function setCreditSize(address newCreditSize) external creditSideNotSet{}
-    function setDebitSize(address newDebitSize) external debitSizeNotSet{}
-	function setBaseInfo(string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public baseInfoNotSet{}
+    
+    function setCreditSize(address newCreditSize) public creditSideNotSet{}
+    function setDebitSize(address newDebitSize) public debitSizeNotSet{}
+	function setBaseInfo(address _creditSize,address _debitSize,string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public baseInfoNotSet{}
 
 
     function getPledgeSymbol() constant returns(string){return pledgeSymbol;}
