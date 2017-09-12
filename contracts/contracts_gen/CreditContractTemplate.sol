@@ -1,44 +1,47 @@
-pragama solidity ^0.4.13;
+pragma solidity ^0.4.13;
 
 import '../support/PledgeManager.sol';
-import 'github.com/cctoken/cctoken/contracts/CRCToken.sol';
+import 'cctoken/contracts/CRCToken.sol';
 import './CreditContractInterface.sol';
+import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 
 contract CreditContractTemplate is CreditContractInterface{
-	public address creditSide;
-	public address debitSide;
-	public PledgeManager pledgeManager;
-	public CRCToken crcToken;
 
-    public string pledgeSymbol;
-	public uint256 interestRate;
+    using SafeMath for uint256;
+	address public creditSide;
+	address public debitSide;
+	PledgeManager public pledgeManager;
+	CRCToken public crcToken;
 
-    public uint256 pledgeAmount;
-    public uint256 targetPledgeAmount;
-    public uint256 crcAmount;
-    public uint256 targetCrcAmount;
+    string public pledgeSymbol;
+	uint256 public interestRate;
 
-	public uint256 startTime;
-	public uint256 endTime;
+    uint256 public pledgeAmount;
+    uint256 public targetPledgeAmount;
+    uint256 public crcAmount;
+    uint256 public targetCrcAmount;
 
-    public uint256 waitRedeemTime;
+	uint256 public startTime;
+	uint256 public endTime;
 
-    public uint256 closePositionRate;
+    uint256 public waitRedeemTime;
 
-
-    public boolean finish;
-    public uint256 paybackAmount;
-    public boolean hasPledge;
+    uint256 public closePositionRate;
 
 
-    public boolean baseInfoHasSet;
+    bool public finish;
+    uint256 public paybackAmount;
+    bool public hasPledge;
+
+
+    bool public baseInfoHasSet;
 
 
 
 
 	function CreditContractTemplate(){
-		pledgeManager = PledgeManager(0xxxxxxxxxxxxxxxxxxxx);
-		crcToken = CRCToken(0xxxxxxxxxxxxxxxxxxxx);
+		pledgeManager = PledgeManager(0x0);
+		crcToken = CRCToken(0x0);
 		baseInfoHasSet=false;
 		finish=false;
 		hasPledge=false;
@@ -87,23 +90,23 @@ contract CreditContractTemplate is CreditContractInterface{
 		_;
 	}
 
-    modifiler reachPaybackAmount(){
-		assert(getPaybackAmount()>=(100.add(interestRate)).mul(crcAmount.div(100)));
+    modifier reachPaybackAmount(){
+		assert(getPaybackAmount()>=(interestRate.add(100)).mul(crcAmount.div(100)));
 		_;
     }
 
 
-    modifiler creditSideNotSet(){
-		assert(getCreditSize()==0x);
+    modifier creditSideNotSet(){
+		assert(getCreditSize()==0x0);
 		_;
     }
 
-    modifiler debitSizeNotSet(){
-		assert(getDebitSize()==0x);
+    modifier debitSizeNotSet(){
+		assert(getDebitSize()==0x0);
 		_;
     }
 
-    modifiler baseInfoNotSet(){
+    modifier baseInfoNotSet(){
 		assert(!baseInfoHasSet);
 		_;
     }
@@ -114,12 +117,12 @@ contract CreditContractTemplate is CreditContractInterface{
     function creditClosePosition() external onlyCreditSide notReachWaitRedeemTime {}
     function debitSizeReceiveCRC() external reachStartTime notReachEndTime reachTargetPledgeAmount{}
     function debitSizePledgeWithERC20(uint256 _vaule) external onlyDebitSide notReachStartTime {}
-    function debitSizePledgeWithETH() external  external onlyDebitSide notReachStartTime {}
+    function debitSizePledgeWithETH() external onlyDebitSide notReachStartTime {}
 	function debitSizePayback(uint256 _crcVaule) external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime {}
 	function debitSizeRedeemPledge() external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime reachPaybackAmount {}
     function changeCreditSize(address newCreditSize) external onlyCreditSide{}
     function changeDebitSize(address newDebitSize) external onlyDebitSide{}
-    
+
     function setCreditSize(address newCreditSize) public creditSideNotSet{}
     function setDebitSize(address newDebitSize) public debitSizeNotSet{}
 	function setBaseInfo(address _creditSize,address _debitSize,string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public baseInfoNotSet{}
@@ -132,7 +135,7 @@ contract CreditContractTemplate is CreditContractInterface{
     function getTargetPledgeAmount() constant returns(uint256){return targetPledgeAmount;}
     function getPledgeAmount() constant returns(uint256){return pledgeAmount;}
     function getTargetCrcAmount() constant returns(uint256){return targetCrcAmount;}
-    function getCRCAmount() constant returns(uint256){return crcAmount;}
+    function getCrcAmount() constant returns(uint256){return crcAmount;}
     function getStartTime() constant returns(uint256){return startTime;}
     function getEndTime() constant returns(uint256){return endTime;}
     function getWaitRedeemTime() constant returns(uint256){return waitRedeemTime;}

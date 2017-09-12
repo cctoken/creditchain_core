@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/cctoken/creditchain_core#readme",
   "dependencies": {
+    "cctoken": "^1.0.1",
     "zeppelin-solidity": "^1.2.0"
   }
 }

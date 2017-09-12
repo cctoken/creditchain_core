@@ -8,12 +8,12 @@ contract ContractFactory is Destructible {
   mapping(address => address[]) public debitSizeContracts;
 
 
-  event CreditContractCreated(address index creator,address contractAddress);
+  event CreditContractCreated(address indexed creator,address contractAddress);
 
   function ContractFactory(){}
 
   function creditSizeCreateContract() returns(CreditContractTemplate) {
-    CreditContractTemplate target = new CreditContractTemplate(0);
+    CreditContractTemplate target = new CreditContractTemplate();
     target.changeCreditSize(msg.sender);
 
     address[] storage contracts = creditSizeContracts[msg.sender];
