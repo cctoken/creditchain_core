@@ -5,7 +5,7 @@ contract CreditContractInterface{
     function creditSizeSendCRC(uint256 _vaule) external ;
     function creditSizeReceiveCRC() external ;
     function creditClosePosition() external;
-    function debitSizeReceiveCRC() external ;
+    function   () external ;
     function debitSizePledgeWithERC20(uint256 _vaule) external ;
     function debitSizePledgeWithETH() external ;
 	function debitSizePayback(uint256 _crcVaule) external ;
