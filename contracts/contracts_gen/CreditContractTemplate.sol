@@ -36,12 +36,9 @@ contract CreditContractTemplate is CreditContractInterface{
 
     bool public baseInfoHasSet;
 
-
-
-
 	function CreditContractTemplate(){
-		pledgeManager = PledgeManager(0x0);
-		crcToken = CRCToken(0x0);
+		pledgeManager = PledgeManager(getPledgeManagerDeployAddress());
+		crcToken = CRCToken(getCRCTokenDeployAddress());
 		baseInfoHasSet=false;
 		finish=false;
 		hasPledge=false;
@@ -112,20 +109,45 @@ contract CreditContractTemplate is CreditContractInterface{
     }
 
 
-    function creditSizeSendCRC(uint256 _vaule) external onlyCreditSide notReachStartTime {}
-    function creditSizeReceiveCRC() external onlyCreditSide reachEndTime {}
+    function setBaseInfo(address _creditSize,address _debitSize,string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public baseInfoNotSet{}
+
+    //借出方提供打款凭证(打款由线下调用approve完成)
+    function proveCreditSizeSendedCRC() external onlyCreditSide notReachStartTime {
+       uint256 hasReceiveCRC = crcToken.allowance(msg.sender,this);
+       require(hasReceiveCRC>=targetCrcAmount);
+       if(hasReceiveCRC>targetCrcAmount){
+        uint256 refundAmount = hasReceiveCRC.sub(targetCrcAmount);
+        crcToken.transferFrom(msg.sender,msg.sender,refundAmount);
+       }
+       crcAmount = targetCrcAmount;
+    }
+
+    //借出方接收报酬
+    function creditSizeReceiveCRC() external onlyCreditSide reachEndTime {
+        uint256 hasReceiveCRC = crcToken.allowance(debitSide,this);
+        crcToken.transferFrom(debitSide,msg.sender,hasReceiveCRC);
+    }
+
+
+    //借出方平仓
     function creditClosePosition() external onlyCreditSide notReachWaitRedeemTime {}
-    function debitSizeReceiveCRC() external reachStartTime notReachEndTime reachTargetPledgeAmount{}
+
+    //借入方接收款项
+    function debitSizeReceiveCRC() external reachStartTime notReachEndTime reachTargetPledgeAmount{
+        uint256 hasReceiveCRC = crcToken.allowance(creditSide,this);
+        crcToken.transferFrom(creditSide,msg.sender,hasReceiveCRC);
+    }
+
+
     function debitSizePledgeWithERC20(uint256 _vaule) external onlyDebitSide notReachStartTime {}
     function debitSizePledgeWithETH() external onlyDebitSide notReachStartTime {}
 	function debitSizePayback(uint256 _crcVaule) external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime {}
 	function debitSizeRedeemPledge() external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime reachPaybackAmount {}
     function changeCreditSize(address newCreditSize) external onlyCreditSide{}
     function changeDebitSize(address newDebitSize) external onlyDebitSide{}
-
     function setCreditSize(address newCreditSize) public creditSideNotSet{}
     function setDebitSize(address newDebitSize) public debitSizeNotSet{}
-	function setBaseInfo(address _creditSize,address _debitSize,string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public baseInfoNotSet{}
+
 
 
     function getPledgeSymbol() constant returns(string){return pledgeSymbol;}
@@ -142,5 +164,13 @@ contract CreditContractTemplate is CreditContractInterface{
     function getClosePositionRate() constant returns(uint256){return closePositionRate;}
     function getPaybackAmount() constant returns(uint256){return paybackAmount;}
     function isFinish() constant returns(bool){return finish;}
+
+    function getPledgeManagerDeployAddress() returns(address){
+        return 0x0;
+    }
+
+    function getCRCTokenDeployAddress() returns(address){
+        return 0x0;
+    }
 
 }

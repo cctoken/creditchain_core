@@ -2,10 +2,10 @@ pragma solidity ^0.4.13;
 
 contract CreditContractInterface{
 
-    function creditSizeSendCRC(uint256 _vaule) external ;
+    function proveCreditSizeSendedCRC() external ;
     function creditSizeReceiveCRC() external ;
     function creditClosePosition() external;
-    function   () external ;
+    function debitSizeReceiveCRC() external;
     function debitSizePledgeWithERC20(uint256 _vaule) external ;
     function debitSizePledgeWithETH() external ;
 	function debitSizePayback(uint256 _crcVaule) external ;
