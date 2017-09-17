@@ -2,26 +2,26 @@ pragma solidity ^0.4.13;
 
 contract CreditContractInterface{
 
-    function proveCreditSizeSendedCRC() external ;
-    function creditSizeReceiveCRC() external ;
+    function creditSideSendedCRC() external ;
+    function creditSideReceiveCRC() external ;
     function creditClosePosition() external;
-    function debitSizeReceiveCRC() external;
-    function debitSizePledgeWithERC20(uint256 _vaule) external ;
-    function debitSizePledgeWithETH() external ;
-	function debitSizePayback(uint256 _crcVaule) external ;
-	function debitSizeRedeemPledge() external ;
-    function changeCreditSize(address newCreditSize) external ;
-    function changeDebitSize(address newDebitSize) external ;
+    function debitSideReceiveCRC() external;
+    function debitSidePledgeWithERC20() external ;
+    function debitSidePledgeWithETH() internal ;
+	function debitSidePayback() external ;
+	function debitSideRedeemPledge() external ;
+    function changeCreditSide(address newCreditSide) external ;
+    function changeDebitSide(address newDebitSide) external ;
 
-    function setCreditSize(address newCreditSize) public ;
-    function setDebitSize(address newDebitSize) public ;
+    function setCreditSide(address newCreditSide) public ;
+    function setDebitSide(address newDebitSide) public ;
 	function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public ;
 
 
     function getPledgeSymbolIndex() constant returns(uint256);
     function getInterestRate() constant returns(uint256);
-    function getDebitSize() constant returns(address);
-    function getCreditSize() constant returns(address);
+    function getDebitSide() constant returns(address);
+    function getCreditSide() constant returns(address);
     function getTargetPledgeAmount() constant returns(uint256);
     function getPledgeAmount() constant returns(uint256);
     function getTargetCrcAmount() constant returns(uint256);

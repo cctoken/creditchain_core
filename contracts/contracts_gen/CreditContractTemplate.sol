@@ -1,5 +1,6 @@
 pragma solidity ^0.4.13;
 
+import 'zeppelin-solidity/contracts/token/ERC20.sol';
 import '../support/PledgeManager.sol';
 import '../support/TokenPriceManager.sol';
 import 'cctoken/contracts/CRCToken.sol';
@@ -110,18 +111,22 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
 		assert(getPaybackAmount()>=queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
 		_;
     }
+    modifier notReachPaybackAmount(){
+		assert(getPaybackAmount()<queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
+		_;
+    }
 	modifier reachClosePosition(){
 		assert(queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeUsdtAmount)<targetClosePositionUsdtAmount);
 		_;
 	}
 
     modifier creditSideNotSet(){
-		assert(getCreditSize()==0x0);
+		assert(getCreditSide()==0x0);
 		_;
     }
 
-    modifier debitSizeNotSet(){
-		assert(getDebitSize()==0x0);
+    modifier debitSideNotSet(){
+		assert(getDebitSide()==0x0);
 		_;
     }
 
@@ -159,56 +164,116 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     }
 
     //借出方提供打款凭证(线下需要调用approve)
-    function proveCreditSizeSendedCRC() external onlyCreditSide notReachStartTime {
+    function creditSideSendedCRC() external onlyCreditSide notReachStartTime {
        uint256 hasReceiveCRC = crcToken.allowance(msg.sender,this);
-       require(hasReceiveCRC>=targetCrcAmount);
-       if(hasReceiveCRC>targetCrcAmount){
-        uint256 refundAmount = hasReceiveCRC.sub(targetCrcAmount);
+       require(hasReceiveCRC>=getTargetCrcAmount());
+       if(hasReceiveCRC>getTargetCrcAmount()){
+        uint256 refundAmount = hasReceiveCRC.sub(getTargetCrcAmount());
         assert(crcToken.transferFrom(msg.sender,msg.sender,refundAmount));
        }
-	   assert(crcToken.transferFrom(msg.sender,this,targetCrcAmount));
-       crcAmount = targetCrcAmount;
+	   assert(crcToken.transferFrom(msg.sender,this,getTargetCrcAmount()));
+       crcAmount = getTargetCrcAmount();
     }
 
     //借出方接收报酬
-    function creditSizeReceiveCRC() external onlyCreditSide reachEndTime reachPaybackAmount {
+    function creditSideReceiveCRC() external onlyCreditSide reachEndTime reachPaybackAmount {
         crcToken.transfer(msg.sender,getPaybackAmount());
     }
 
 
     //借出方平仓
-    function creditClosePosition() external onlyCreditSide notReachWaitRedeemTime reachClosePosition {
+    function creditClosePosition() external onlyCreditSide notReachWaitRedeemTime notReachPaybackAmount reachClosePosition {
 
+		if(pledgeSymbolIndex==1){
+		//eth
+			if(!msg.sender.send(this.balance)) revert();
+		}else{
+		//erc20
+			ERC20 erc20=ERC20(getPledgeAddress(pledgeSymbolIndex));
+			if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
+		}
 
     }
 
     //借入方接收款项
-    function debitSizeReceiveCRC() external onlyDebitSide reachStartTime notReachEndTime reachTargetPledgeAmount reachTargetCrcAmount{
+    function debitSideReceiveCRC() external onlyDebitSide reachStartTime notReachEndTime reachTargetPledgeAmount reachTargetCrcAmount{
         crcToken.transfer(msg.sender,getCrcAmount());
     }
 
-
-    function debitSizePledgeWithERC20(uint256 _vaule) external onlyDebitSide notReachStartTime {
+	//调用之前先调用对应erc20的aprove
+    function debitSidePledgeWithERC20() external onlyDebitSide notReachStartTime {
 		require(pledgeSymbolIndex!=1);
 
+	    address pledgeAddress=getPledgeAddress(pledgeSymbolIndex);
+	    ERC20 erc20=ERC20(pledgeAddress);
 
+        uint256 hasReceiveERC20 = erc20.allowance(msg.sender,this);
+        require(hasReceiveERC20>=getTargetPledgeAmount());
+        if(hasReceiveERC20>getTargetPledgeAmount()){
+            uint256 refundAmount = hasReceiveERC20.sub(getTargetPledgeAmount());
+            assert(erc20.transferFrom(msg.sender,msg.sender,refundAmount));
+        }
+	    assert(erc20.transferFrom(msg.sender,this,getTargetPledgeAmount()));
+        pledgeAmount = getTargetPledgeAmount();
     }
 
+	function () payable external{
+		debitSidePledgeWithETH();
+	}
 
-    function debitSizePledgeWithETH() external onlyDebitSide notReachStartTime {}
-	function debitSizePayback(uint256 _crcVaule) external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime {}
-	function debitSizeRedeemPledge() external reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime reachPaybackAmount {}
-    function changeCreditSize(address newCreditSize) external onlyCreditSide{}
-    function changeDebitSize(address newDebitSize) external onlyDebitSide{}
-    function setCreditSize(address newCreditSize) public creditSideNotSet{}
-    function setDebitSize(address newDebitSize) public debitSizeNotSet{}
+    function debitSidePledgeWithETH() internal onlyDebitSide notReachStartTime {
+        require(pledgeSymbolIndex==1);
+        assert(pledgeAmount.add(msg.value)<=getTargetPledgeAmount());
+		pledgeAmount = pledgeAmount.add(msg.value);
+    }
+
+	//调用之前需要调用approve
+	function debitSidePayback() external onlyDebitSide reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime {
+       uint256 hasReceiveCRC = crcToken.allowance(msg.sender,this);
+
+       uint256 targetCrcPaybackAmount=queryPledgePriceForUsdt(2,targetPaybackUsdtAmount);
+
+       require(hasReceiveCRC>=targetCrcPaybackAmount);
+       if(hasReceiveCRC>targetCrcPaybackAmount){
+        uint256 refundAmount = hasReceiveCRC.sub(targetCrcPaybackAmount);
+        assert(crcToken.transferFrom(msg.sender,msg.sender,refundAmount));
+       }
+	   assert(crcToken.transferFrom(msg.sender,this,targetCrcPaybackAmount));
+       paybackAmount = targetCrcPaybackAmount;
+	}
+
+	function debitSideRedeemPledge() external onlyDebitSide reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime reachPaybackAmount {
+		if(pledgeSymbolIndex==1){
+        //eth
+        	if(!msg.sender.send(this.balance)) revert();
+        }else{
+        //erc20
+        	ERC20 erc20=ERC20(getPledgeAddress(pledgeSymbolIndex));
+        	if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
+        }
+	}
+
+
+    function changeCreditSide(address newCreditSide) external onlyCreditSide{
+        creditSide=newCreditSide;
+    }
+    function changeDebitSide(address newDebitSide) external onlyDebitSide{
+        debitSide=newDebitSide;
+    }
+
+    function setCreditSide(address newCreditSide) public creditSideNotSet{
+        creditSide=newCreditSide;
+    }
+    function setDebitSide(address newDebitSide) public debitSideNotSet{
+        debitSide=newDebitSide;
+    }
 
 
 
     function getPledgeSymbolIndex() constant returns(uint256){return pledgeSymbolIndex;}
     function getInterestRate() constant returns(uint256){return interestRate;}
-    function getDebitSize() constant returns(address){return debitSide;}
-    function getCreditSize() constant returns(address){return creditSide;}
+    function getDebitSide() constant returns(address){return debitSide;}
+    function getCreditSide() constant returns(address){return creditSide;}
     function getTargetPledgeAmount() constant returns(uint256){return targetPledgeAmount;}
     function getPledgeAmount() constant returns(uint256){return pledgeAmount;}
     function getTargetCrcAmount() constant returns(uint256){return targetCrcAmount;}
