@@ -15,10 +15,10 @@ contract CreditContractInterface{
 
     function setCreditSize(address newCreditSize) public ;
     function setDebitSize(address newDebitSize) public ;
-	function setBaseInfo(address _creditSize,address _debitSize,string _pledgeSymbol,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public ;
+	function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public ;
 
 
-    function getPledgeSymbol() constant returns(string);
+    function getPledgeSymbolIndex() constant returns(uint256);
     function getInterestRate() constant returns(uint256);
     function getDebitSize() constant returns(address);
     function getCreditSize() constant returns(address);
