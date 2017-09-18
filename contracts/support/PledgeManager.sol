@@ -5,7 +5,7 @@ contract PledgeManager is Ownable {
         uint256 symIndex;
         string symbol;
         address tokenAddress;
-        string  anchoringRestApi;
+        string anchoringRestApi;
     }
 
     mapping(uint256=>pledge) pledges;

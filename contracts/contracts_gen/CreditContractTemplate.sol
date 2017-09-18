@@ -52,16 +52,12 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     uint256 public paybackAmount;
     //目标回款usdt金额
     uint256 public targetPaybackUsdtAmount;
-    bool public hasPledge;
-
-
     bool public baseInfoHasSet;
-    string public _eth="ETH";
+
     function CreditContractTemplate(){
         crcToken = CRCToken(getCRCTokenDeployAddress());
         baseInfoHasSet=false;
         finish=false;
-        hasPledge=false;
     }
 
     modifier onlyCreditSide(){
@@ -173,11 +169,13 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
         }
         assert(crcToken.transferFrom(msg.sender,this,getTargetCrcAmount()));
         crcAmount = getTargetCrcAmount();
+        CreditSideSendedCRC(this,msg.sender);
     }
 
     //借出方接收报酬
     function creditSideReceiveCRC() external onlyCreditSide reachEndTime reachPaybackAmount {
         crcToken.transfer(msg.sender,getPaybackAmount());
+        CreditSideReceiveCRC(this,msg.sender);
     }
 
 
@@ -191,6 +189,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
             ERC20 erc20=ERC20(getPledgeAddress(pledgeSymbolIndex));
             if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
         }
+        CreditSideClosePosition(this,msg.sender);
     }
 
     //借入方接收款项
@@ -211,6 +210,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
         }
         assert(erc20.transferFrom(msg.sender,this,getTargetPledgeAmount()));
         pledgeAmount = getTargetPledgeAmount();
+        DebitSidePledge(this,msg.sender,pledgeSymbolIndex);
     }
 
     function () payable external{
@@ -234,6 +234,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
         }
         assert(crcToken.transferFrom(msg.sender,this,targetCrcPaybackAmount));
         paybackAmount = targetCrcPaybackAmount;
+        DebitSidePayback(this,msg.sender);
     }
 
     function debitSideRedeemPledge() external onlyDebitSide reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime reachPaybackAmount {
@@ -245,14 +246,17 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
             ERC20 erc20=ERC20(getPledgeAddress(pledgeSymbolIndex));
             if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
         }
+        DebitSideRedeemPledge(this,msg.sender);
 	}
 
 
     function changeCreditSide(address newCreditSide) external onlyCreditSide{
         creditSide=newCreditSide;
+        ChangeCreditSide(this,msg.sender,newCreditSide);
     }
     function changeDebitSide(address newDebitSide) external onlyDebitSide{
         debitSide=newDebitSide;
+        ChangeDebitSide(this,msg.sender,newDebitSide);
     }
 
     function setCreditSide(address newCreditSide) public creditSideNotSet{

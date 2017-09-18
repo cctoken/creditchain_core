@@ -1,6 +1,14 @@
 pragma solidity ^0.4.13;
 
 contract CreditContractInterface{
+    event CreditSideSendedCRC(address indexed _contractAddress,address _creditSideAddress);
+    event CreditSideReceiveCRC(address indexed _contractAddress,address _creditSideAddress);
+    event DebitSidePledge(address indexed _contractAddress,address _debitSideAddress ,uint256 _pledgeType);
+    event CreditSideClosePosition(address indexed _contractAddress,address _creditSideAddress);
+    event DebitSidePayback(address indexed _contractAddress,address _debitSideAddress);
+    event DebitSideRedeemPledge(address indexed _contractAddress,address _debitSideAddress);
+    event ChangeCreditSide(address indexed _contractAddress,address _oldCreditSideAddress,address _newCreditSideAddress);
+    event ChangeDebitSide(address indexed _contractAddress,address _oldDebitSideAddress,address _newDebitSideAddress);
 
     function creditSideSendedCRC() external ;
     function creditSideReceiveCRC() external ;
@@ -12,7 +20,6 @@ contract CreditContractInterface{
     function debitSideRedeemPledge() external ;
     function changeCreditSide(address newCreditSide) external ;
     function changeDebitSide(address newDebitSide) external ;
-
     function setCreditSide(address newCreditSide) public ;
     function setDebitSide(address newDebitSide) public ;
     function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public ;
