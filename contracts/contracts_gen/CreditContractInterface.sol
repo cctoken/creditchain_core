@@ -8,14 +8,14 @@ contract CreditContractInterface{
     function debitSideReceiveCRC() external;
     function debitSidePledgeWithERC20() external ;
     function debitSidePledgeWithETH() internal ;
-	function debitSidePayback() external ;
-	function debitSideRedeemPledge() external ;
+    function debitSidePayback() external ;
+    function debitSideRedeemPledge() external ;
     function changeCreditSide(address newCreditSide) external ;
     function changeDebitSide(address newDebitSide) external ;
 
     function setCreditSide(address newCreditSide) public ;
     function setDebitSide(address newDebitSide) public ;
-	function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public ;
+    function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public ;
 
 
     function getPledgeSymbolIndex() constant returns(uint256);
