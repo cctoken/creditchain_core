@@ -1,7 +1,15 @@
-var PledgeManager = artifacts.require("./PledgeManager.sol");
-var CreditContractTemplate = artifacts.require("./CreditContractTemplate.sol");
+
+var OraclizeManager = artifacts.require("./support/OraclizeManager.sol");
+var TokenPriceManager = artifacts.require("./support/TokenPriceManager.sol");
+
+
+var ContractFactory = artifacts.require("./contracts_gen/ContractFactory.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(PledgeManager);
-  deployer.deploy(CreditContractTemplate);
+  deployer.deploy(OraclizeManager);
+  deployer.deploy(TokenPriceManager);
+
+
+
+  deployer.deploy(ContractFactory);
 };
