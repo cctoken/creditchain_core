@@ -5,6 +5,6 @@ contract OraclizeManager {
     }
 
     function getPriceRateForUrl(string url) public returns(uint256 price){
-        return 0;
+        return 2;
     }
 }
