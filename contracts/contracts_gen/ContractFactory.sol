@@ -41,13 +41,16 @@ contract ContractFactory is Destructible {
   //      contracts[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
 //        contracts[1]=target;
 
-        testAddress[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
-        testAddress[1]=0x404BE2e67612542E05f1b685c544454d28516e59;
+        //testAddress[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
+        //testAddress[1]=0x404BE2e67612542E05f1b685c544454d28516e59;
         targetAddress=0x404BE2e67612542E05f1b685c544454d28516e59;
       //  CreditContractCreated(1,msg.sender,target);
         return CreditContractTemplate(targetAddress);
     }
-
+    function test2() returns(address) {
+        targetAddress=0x404BE2e67612542E05f1b685c544454d28516e59;
+        return targetAddress;
+    }
     function queryTestAddress1()  constant public returns(address){
         return testAddress[0];
     }
