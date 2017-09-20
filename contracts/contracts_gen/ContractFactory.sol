@@ -45,7 +45,7 @@ contract ContractFactory is Destructible {
         testAddress[1]=target;
         targetAddress=target;
         CreditContractCreated(1,msg.sender,target);
-        return target;
+        return CreditContractTemplate(target);
     }
 
     function queryTestAddress1()  constant public returns(address){
