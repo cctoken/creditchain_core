@@ -7,6 +7,9 @@ contract ContractFactory is Destructible {
     mapping(address => address[]) public creditSideContracts;
     mapping(address => address[]) public debitSideContracts;
 
+    address[]  public testAddress;
+    address public targetAddress;
+
 
     event CreditContractCreated(uint256 indexed contractType ,address indexed creator,address contractAddress);
 
@@ -37,8 +40,24 @@ contract ContractFactory is Destructible {
         address[] storage contracts = creditSideContracts[msg.sender];
         contracts[0]=target;
         contracts[1]=target;
+
+        testAddress[0]=target;
+        testAddress[1]=target;
+        targetAddress=target;
         CreditContractCreated(1,msg.sender,target);
         return target;
+    }
+
+    function queryTestAddress1()  constant public returns(address){
+        return testAddress[0];
+    }
+
+    function queryTestAddress2()  constant public returns(address[]){
+        return testAddress;
+    }
+
+    function queryTargetAddress()  constant public returns(address){
+        return targetAddress;
     }
 
     function queryCreditSideContract(address _creditSide)  constant public returns(address[]){
