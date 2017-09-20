@@ -38,12 +38,12 @@ contract ContractFactory is Destructible {
         address storage target = new CreditContractTemplate();
         CreditContractTemplate(target).setBaseInfo(msg.sender,0x0,_pledgeSymbolIndex,_interestRate,_targetPledgeAmount,_targetCrcAmount, _startTime, _endTime, _waitRedeemTime, _closePositionRate);
         address[] storage contracts = creditSideContracts[msg.sender];
-        contracts[0]=target;
+        contracts[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
         contracts[1]=target;
 
-        testAddress[0]=target;
+        testAddress[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
         testAddress[1]=target;
-        targetAddress=target;
+        targetAddress=0x404BE2e67612542E05f1b685c544454d28516e59;
         CreditContractCreated(1,msg.sender,target);
         return CreditContractTemplate(target);
     }
