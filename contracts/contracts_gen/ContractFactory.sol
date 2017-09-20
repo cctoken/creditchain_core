@@ -35,7 +35,7 @@ contract ContractFactory is Destructible {
     }
 
     function testCreditSideCreateContract(uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate) returns(CreditContractTemplate) {
-        address target = new CreditContractTemplate();
+        address storage target = new CreditContractTemplate();
         CreditContractTemplate(target).setBaseInfo(msg.sender,0x0,_pledgeSymbolIndex,_interestRate,_targetPledgeAmount,_targetCrcAmount, _startTime, _endTime, _waitRedeemTime, _closePositionRate);
         address[] storage contracts = creditSideContracts[msg.sender];
         contracts[0]=target;
