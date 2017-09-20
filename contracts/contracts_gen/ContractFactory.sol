@@ -35,17 +35,17 @@ contract ContractFactory is Destructible {
     }
 
     function testCreditSideCreateContract(uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate) returns(CreditContractTemplate) {
-        address target = new CreditContractTemplate();
-        CreditContractTemplate(target).setBaseInfo(msg.sender,0x0,_pledgeSymbolIndex,_interestRate,_targetPledgeAmount,_targetCrcAmount, _startTime, _endTime, _waitRedeemTime, _closePositionRate);
-        address[] storage contracts = creditSideContracts[msg.sender];
-        contracts[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
-        contracts[1]=target;
+        //address target = new CreditContractTemplate();
+      //  CreditContractTemplate(target).setBaseInfo(msg.sender,0x0,_pledgeSymbolIndex,_interestRate,_targetPledgeAmount,_targetCrcAmount, _startTime, _endTime, _waitRedeemTime, _closePositionRate);
+    //    address[] storage contracts = creditSideContracts[msg.sender];
+  //      contracts[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
+//        contracts[1]=target;
 
         testAddress[0]=0x404BE2e67612542E05f1b685c544454d28516e59;
-        testAddress[1]=target;
+        testAddress[1]=0x404BE2e67612542E05f1b685c544454d28516e59;
         targetAddress=0x404BE2e67612542E05f1b685c544454d28516e59;
-        CreditContractCreated(1,msg.sender,target);
-        return CreditContractTemplate(target);
+      //  CreditContractCreated(1,msg.sender,target);
+        return CreditContractTemplate(targetAddress);
     }
 
     function queryTestAddress1()  constant public returns(address){
