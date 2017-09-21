@@ -22,7 +22,7 @@ contract CreditContractInterface{
     function changeDebitSide(address newDebitSide) external ;
     function setCreditSide(address newCreditSide) public ;
     function setDebitSide(address newDebitSide) public ;
-    
+
 
 
     function getPledgeSymbolIndex() constant returns(uint256);

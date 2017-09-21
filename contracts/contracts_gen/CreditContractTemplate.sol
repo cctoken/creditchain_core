@@ -6,7 +6,7 @@ import '../support/TokenPriceManager.sol';
 import 'cctoken/contracts/CRCToken.sol';
 import './CreditContractInterface.sol';
 
-contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
+contract CreditContractTemplate is CreditContractInterface,Ownable {
     using SafeMath for uint256;
     //借出方
     address public creditSide;
@@ -14,6 +14,8 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     address public debitSide;
     //ccoken地址
     CRCToken public crcToken;
+    //tokenPriceManager 地址
+    TokenPriceManager public tokenPriceManager;
     //抵押物标识
     uint256 public pledgeSymbolIndex;
 
@@ -54,10 +56,13 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     uint256 public targetPaybackUsdtAmount;
     bool public baseInfoHasSet;
 
-    function CreditContractTemplate(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate){
-        crcToken = CRCToken(getCRCTokenDeployAddress());
+    function CreditContractTemplate(){
+        baseInfoHasSet=false;
         finish=false;
-
+    }
+    function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate,address _crcTokenAddress,address _tokenPriceManagerAddress) baseInfoNotSet{
+        crcToken = CRCToken(_crcTokenAddress);
+        tokenPriceManager=TokenPriceManager(_tokenPriceManagerAddress);
         creditSide=_creditSide;
         debitSide=_debitSide;
         pledgeSymbolIndex=_pledgeSymbolIndex;
@@ -65,11 +70,11 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
 
         targetPledgeAmount=_targetPledgeAmount;
         //计算抵押物usdt成本
-        targetPledgeUsdtAmount=queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeAmount);
+        targetPledgeUsdtAmount=tokenPriceManager.queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeAmount);
 
         targetCrcAmount=_targetCrcAmount;
         //以借出方初始投入的crc计算usdt成本
-        targetUsdtAmount=queryUsdtPriceForPledge(2,targetCrcAmount);
+        targetUsdtAmount=tokenPriceManager.queryUsdtPriceForPledge(2,targetCrcAmount);
 
         //以usdt成本计算最终收益usdt标准
         uint256 basePercentage=100;
@@ -82,8 +87,13 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
 
         //以usdt计算平仓线
         targetClosePositionUsdtAmount=(basePercentage.sub(closePositionRate)).mul(targetPledgeUsdtAmount.div(100));
+        baseInfoHasSet=true;
     }
 
+    modifier baseInfoNotSet(){
+        assert(!baseInfoHasSet);
+        _;
+    }
     modifier onlyCreditSide(){
         assert(msg.sender==creditSide);
         _;
@@ -128,15 +138,15 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     }
 
     modifier reachPaybackAmount(){
-        assert(getPaybackAmount()>=queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
+        assert(getPaybackAmount()>=tokenPriceManager.queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
         _;
     }
     modifier notReachPaybackAmount(){
-        assert(getPaybackAmount()<queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
+        assert(getPaybackAmount()<tokenPriceManager.queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
         _;
     }
     modifier reachClosePosition(){
-        assert(queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeUsdtAmount)<targetClosePositionUsdtAmount);
+        assert(tokenPriceManager.queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeUsdtAmount)<targetClosePositionUsdtAmount);
         _;
     }
 
@@ -179,7 +189,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
             if(!msg.sender.send(this.balance)) revert();
         }else{
             //erc20
-            ERC20 erc20=ERC20(getPledgeAddress(pledgeSymbolIndex));
+            ERC20 erc20=ERC20(tokenPriceManager.getPledgeAddress(pledgeSymbolIndex));
             if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
         }
         CreditSideClosePosition(this,msg.sender);
@@ -193,7 +203,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     //调用之前先调用对应erc20的aprove
     function debitSidePledgeWithERC20() external onlyDebitSide notReachStartTime {
         require(pledgeSymbolIndex!=1);
-        address pledgeAddress=getPledgeAddress(pledgeSymbolIndex);
+        address pledgeAddress=tokenPriceManager.getPledgeAddress(pledgeSymbolIndex);
         ERC20 erc20=ERC20(pledgeAddress);
         uint256 hasReceiveERC20 = erc20.allowance(msg.sender,this);
         require(hasReceiveERC20>=getTargetPledgeAmount());
@@ -219,7 +229,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     //调用之前需要调用approve
     function debitSidePayback() external onlyDebitSide reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime {
         uint256 hasReceiveCRC = crcToken.allowance(msg.sender,this);
-        uint256 targetCrcPaybackAmount=queryPledgePriceForUsdt(2,targetPaybackUsdtAmount);
+        uint256 targetCrcPaybackAmount=tokenPriceManager.queryPledgePriceForUsdt(2,targetPaybackUsdtAmount);
         require(hasReceiveCRC>=targetCrcPaybackAmount);
         if(hasReceiveCRC>targetCrcPaybackAmount){
             uint256 refundAmount = hasReceiveCRC.sub(targetCrcPaybackAmount);
@@ -236,7 +246,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
             if(!msg.sender.send(this.balance)) revert();
         }else{
             //erc20
-            ERC20 erc20=ERC20(getPledgeAddress(pledgeSymbolIndex));
+            ERC20 erc20=ERC20(tokenPriceManager.getPledgeAddress(pledgeSymbolIndex));
             if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
         }
         DebitSideRedeemPledge(this,msg.sender);
@@ -275,5 +285,4 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     function getClosePositionRate() constant returns(uint256){return closePositionRate;}
     function getPaybackAmount() constant returns(uint256){return paybackAmount;}
     function isFinish() constant returns(bool){return finish;}
-    function getCRCTokenDeployAddress() returns(address){return 0x0;}
 }
