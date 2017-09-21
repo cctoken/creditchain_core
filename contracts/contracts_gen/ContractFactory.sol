@@ -46,5 +46,12 @@ contract ContractFactory is Destructible {
         return debitSideContracts[_debitSide];
     }
 
+    function changeCrcTokenAddress(address _crcTokenAddress) external onlyOwner(){
+        crcTokenAddress=_crcTokenAddress;
+    }
+
+    function changeTokenPriceManagerAddress(address _tokenPriceManagerAddress) external onlyOwner(){
+        tokenPriceManagerAddress=_tokenPriceManagerAddress;
+    }
 }
 
