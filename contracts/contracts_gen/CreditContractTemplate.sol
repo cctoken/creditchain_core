@@ -13,9 +13,9 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
     //借入方
     address public debitSide;
     //ccoken地址
-    CRCToken public crcToken;
+    address public crcTokenAddress;
     //tokenPriceManager 地址
-    TokenPriceManager public tokenPriceManager;
+    address public tokenPriceManagerAddress;
     //抵押物标识
     uint256 public pledgeSymbolIndex;
 
@@ -61,8 +61,8 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
         finish=false;
     }
     function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate,address _crcTokenAddress,address _tokenPriceManagerAddress) baseInfoNotSet{
-        crcToken = CRCToken(_crcTokenAddress);
-        tokenPriceManager=TokenPriceManager(_tokenPriceManagerAddress);
+        crcTokenAddress = _crcTokenAddress;
+        tokenPriceManagerAddress=_tokenPriceManagerAddress;
         creditSide=_creditSide;
         debitSide=_debitSide;
         pledgeSymbolIndex=_pledgeSymbolIndex;
@@ -70,11 +70,11 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
 
         targetPledgeAmount=_targetPledgeAmount;
         //计算抵押物usdt成本
-        targetPledgeUsdtAmount=tokenPriceManager.queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeAmount);
+        targetPledgeUsdtAmount=TokenPriceManager(tokenPriceManagerAddress).queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeAmount);
 
         targetCrcAmount=_targetCrcAmount;
         //以借出方初始投入的crc计算usdt成本
-        targetUsdtAmount=tokenPriceManager.queryUsdtPriceForPledge(2,targetCrcAmount);
+        targetUsdtAmount=TokenPriceManager(tokenPriceManagerAddress).queryUsdtPriceForPledge(2,targetCrcAmount);
 
         //以usdt成本计算最终收益usdt标准
         uint256 basePercentage=100;
@@ -138,15 +138,15 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
     }
 
     modifier reachPaybackAmount(){
-        assert(getPaybackAmount()>=tokenPriceManager.queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
+        assert(getPaybackAmount()>=TokenPriceManager(tokenPriceManagerAddress).queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
         _;
     }
     modifier notReachPaybackAmount(){
-        assert(getPaybackAmount()<tokenPriceManager.queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
+        assert(getPaybackAmount()<TokenPriceManager(tokenPriceManagerAddress).queryPledgePriceForUsdt(2,targetPaybackUsdtAmount));
         _;
     }
     modifier reachClosePosition(){
-        assert(tokenPriceManager.queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeUsdtAmount)<targetClosePositionUsdtAmount);
+        assert(TokenPriceManager(tokenPriceManagerAddress).queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeUsdtAmount)<targetClosePositionUsdtAmount);
         _;
     }
 
@@ -164,6 +164,7 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
 
     //借出方提供打款凭证(线下需要调用approve)
     function creditSideSendedCRC() external onlyCreditSide notReachStartTime {
+        CRCToken crcToken=CRCToken(crcTokenAddress);
         uint256 hasReceiveCRC = crcToken.allowance(msg.sender,this);
         require(hasReceiveCRC>=getTargetCrcAmount());
         if(hasReceiveCRC>getTargetCrcAmount()){
@@ -177,6 +178,7 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
 
     //借出方接收报酬
     function creditSideReceiveCRC() external onlyCreditSide reachEndTime reachPaybackAmount {
+        CRCToken crcToken=CRCToken(crcTokenAddress);
         crcToken.transfer(msg.sender,getPaybackAmount());
         CreditSideReceiveCRC(this,msg.sender);
     }
@@ -189,7 +191,7 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
             if(!msg.sender.send(this.balance)) revert();
         }else{
             //erc20
-            ERC20 erc20=ERC20(tokenPriceManager.getPledgeAddress(pledgeSymbolIndex));
+            ERC20 erc20=ERC20(TokenPriceManager(tokenPriceManagerAddress).getPledgeAddress(pledgeSymbolIndex));
             if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
         }
         CreditSideClosePosition(this,msg.sender);
@@ -197,13 +199,14 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
 
     //借入方接收款项
     function debitSideReceiveCRC() external onlyDebitSide reachStartTime notReachEndTime reachTargetPledgeAmount reachTargetCrcAmount{
+        CRCToken crcToken=CRCToken(crcTokenAddress);
         crcToken.transfer(msg.sender,getCrcAmount());
     }
 
     //调用之前先调用对应erc20的aprove
     function debitSidePledgeWithERC20() external onlyDebitSide notReachStartTime {
         require(pledgeSymbolIndex!=1);
-        address pledgeAddress=tokenPriceManager.getPledgeAddress(pledgeSymbolIndex);
+        address pledgeAddress=TokenPriceManager(tokenPriceManagerAddress).getPledgeAddress(pledgeSymbolIndex);
         ERC20 erc20=ERC20(pledgeAddress);
         uint256 hasReceiveERC20 = erc20.allowance(msg.sender,this);
         require(hasReceiveERC20>=getTargetPledgeAmount());
@@ -228,8 +231,9 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
 
     //调用之前需要调用approve
     function debitSidePayback() external onlyDebitSide reachTargetPledgeAmount reachTargetCrcAmount reachEndTime notReachWaitRedeemTime {
+        CRCToken crcToken=CRCToken(crcTokenAddress);
         uint256 hasReceiveCRC = crcToken.allowance(msg.sender,this);
-        uint256 targetCrcPaybackAmount=tokenPriceManager.queryPledgePriceForUsdt(2,targetPaybackUsdtAmount);
+        uint256 targetCrcPaybackAmount=TokenPriceManager(tokenPriceManagerAddress).queryPledgePriceForUsdt(2,targetPaybackUsdtAmount);
         require(hasReceiveCRC>=targetCrcPaybackAmount);
         if(hasReceiveCRC>targetCrcPaybackAmount){
             uint256 refundAmount = hasReceiveCRC.sub(targetCrcPaybackAmount);
@@ -246,7 +250,7 @@ contract CreditContractTemplate is CreditContractInterface,Ownable {
             if(!msg.sender.send(this.balance)) revert();
         }else{
             //erc20
-            ERC20 erc20=ERC20(tokenPriceManager.getPledgeAddress(pledgeSymbolIndex));
+            ERC20 erc20=ERC20(TokenPriceManager(tokenPriceManagerAddress).getPledgeAddress(pledgeSymbolIndex));
             if(!(erc20.transfer(msg.sender,getTargetPledgeAmount()))) revert();
         }
         DebitSideRedeemPledge(this,msg.sender);
