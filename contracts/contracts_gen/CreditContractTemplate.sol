@@ -54,10 +54,34 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
     uint256 public targetPaybackUsdtAmount;
     bool public baseInfoHasSet;
 
-    function CreditContractTemplate(){
+    function CreditContractTemplate(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate){
         crcToken = CRCToken(getCRCTokenDeployAddress());
-        baseInfoHasSet=false;
         finish=false;
+
+        creditSide=_creditSide;
+        debitSide=_debitSide;
+        pledgeSymbolIndex=_pledgeSymbolIndex;
+        interestRate=_interestRate;
+
+        targetPledgeAmount=_targetPledgeAmount;
+        //计算抵押物usdt成本
+        targetPledgeUsdtAmount=queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeAmount);
+
+        targetCrcAmount=_targetCrcAmount;
+        //以借出方初始投入的crc计算usdt成本
+        targetUsdtAmount=queryUsdtPriceForPledge(2,targetCrcAmount);
+
+        //以usdt成本计算最终收益usdt标准
+        uint256 basePercentage=100;
+        targetPaybackUsdtAmount=(interestRate.add(basePercentage)).mul(targetUsdtAmount.div(100));
+
+        startTime=_startTime;
+        endTime=_endTime;
+        waitRedeemTime=_waitRedeemTime;
+        closePositionRate=_closePositionRate;
+
+        //以usdt计算平仓线
+        targetClosePositionUsdtAmount=(basePercentage.sub(closePositionRate)).mul(targetPledgeUsdtAmount.div(100));
     }
 
     modifier onlyCreditSide(){
@@ -126,38 +150,7 @@ contract CreditContractTemplate is CreditContractInterface,TokenPriceManager{
         _;
     }
 
-    modifier baseInfoNotSet(){
-        assert(!baseInfoHasSet);
-        _;
-    }
 
-
-    function setBaseInfo(address _creditSide,address _debitSide,uint256 _pledgeSymbolIndex,uint256 _interestRate,uint256 _targetPledgeAmount,uint256 _targetCrcAmount,uint256 _startTime,uint256 _endTime,uint256 _waitRedeemTime,uint256 _closePositionRate)  public baseInfoNotSet{
-        creditSide=_creditSide;
-        debitSide=_debitSide;
-        pledgeSymbolIndex=_pledgeSymbolIndex;
-        interestRate=_interestRate;
-
-        targetPledgeAmount=_targetPledgeAmount;
-        //计算抵押物usdt成本
-        targetPledgeUsdtAmount=queryPledgePriceForUsdt(pledgeSymbolIndex,targetPledgeAmount);
-
-        targetCrcAmount=_targetCrcAmount;
-        //以借出方初始投入的crc计算usdt成本
-        targetUsdtAmount=queryUsdtPriceForPledge(2,targetCrcAmount);
-
-        //以usdt成本计算最终收益usdt标准
-        uint256 basePercentage=100;
-        targetPaybackUsdtAmount=(interestRate.add(basePercentage)).mul(targetUsdtAmount.div(100));
-
-        startTime=_startTime;
-        endTime=_endTime;
-        waitRedeemTime=_waitRedeemTime;
-        closePositionRate=_closePositionRate;
-
-        //以usdt计算平仓线
-        targetClosePositionUsdtAmount=(basePercentage.sub(closePositionRate)).mul(targetPledgeUsdtAmount.div(100));
-    }
 
     //借出方提供打款凭证(线下需要调用approve)
     function creditSideSendedCRC() external onlyCreditSide notReachStartTime {
