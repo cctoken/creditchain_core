@@ -22,13 +22,13 @@ contract TokenPriceManager is PledgeManager{
     }
 
 
-    function queryUsdtPriceForPledge(uint256 _pledgeSymbolIndex,uint256 _value) public returns (uint256){
+    function queryUsdtPriceForPledge(uint256 _pledgeSymbolIndex,uint256 _value) constant returns (uint256){
         pledge storage p=pledges[_pledgeSymbolIndex];
         uint256 priceRate= OraclizeManager(oraclizeManagerAddress).getPriceRateForUrl(p.anchoringRestApi);
         return _value.mul(priceRate);
     }
 
-    function queryPledgePriceForUsdt(uint256 _pledgeSymbolIndex,uint256 _value) public returns (uint256){
+    function queryPledgePriceForUsdt(uint256 _pledgeSymbolIndex,uint256 _value) constant returns (uint256){
         pledge storage p=pledges[_pledgeSymbolIndex];
         uint256 priceRate= OraclizeManager(oraclizeManagerAddress).getPriceRateForUrl(p.anchoringRestApi);
         return _value.div(priceRate);
