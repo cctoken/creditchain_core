@@ -11,6 +11,7 @@ contract OraclizeManager is Ownable  {
     uint256 public fee;
     uint256 public nonce;
     mapping(bytes32=>priceRate) priceRates;
+    address public withdrawFeeAccount;
 
     event TriggerRefreshPriceRate(string indexed symbol,uint256 nonce);
     event PriceRateRefreshed(string indexed symbol,uint256 rate,uint256 updateTime);
@@ -19,12 +20,18 @@ contract OraclizeManager is Ownable  {
         cacheExpireTime=1 hours;
         nonce=0;
         fee=0.01 ether;
+        withdrawFeeAccount=0xbe62B2978bC887f0600A3Ffc78b043b549e41e33;
     }
 
     modifier reachFeeLimit(uint256 value){
         assert(value>=fee);
         _;
     }
+    modifier onlyWithdrawFeeAccount(){
+        assert(msg.sender==withdrawFeeAccount);
+        _;
+    }
+
     //用户触发更新价格，这里只收取手续费，并触发一个事件，真正update由中心化服务去做
     function triggerRefreshPriceRate(string symbol) payable external
         reachFeeLimit(msg.value)
@@ -52,6 +59,12 @@ contract OraclizeManager is Ownable  {
          return pr.rate;
     }
 
+    function withdrawFee() external
+        onlyWithdrawFeeAccount
+    {
+        if(!msg.sender.send(this.balance)) revert();
+    }
+
 
     function setCacheExpireTime(uint256 _cacheExpireTime) external
         onlyOwner
@@ -59,9 +72,15 @@ contract OraclizeManager is Ownable  {
         cacheExpireTime=_cacheExpireTime;
      }
 
-     function setFee(uint256 _fee) external
+    function setFee(uint256 _fee) external
         onlyOwner
      {
         fee=_fee;
      }
+
+    function setWithdrawFeeAccount(address newWithdrawFeeAccount) external
+        onlyOwner
+    {
+        withdrawFeeAccount=newWithdrawFeeAccount;
+    }
 }
